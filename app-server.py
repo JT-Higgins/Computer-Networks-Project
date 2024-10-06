@@ -1,9 +1,35 @@
 import sys
 import socket
 import selectors
-import traceback
 
 sel = selectors.DefaultSelector()
+lobby = {} 
+
+def accept_connection(sock):
+    conn, addr = sock.accept() 
+    print(f"Accepted connection from {addr}")
+    conn.setblocking(False)
+    sel.register(conn, selectors.EVENT_READ, data=addr)
+
+def handle_client(conn, addr):
+    try:
+        data = conn.recv(1024).decode('utf-8')
+        if data:
+            if addr not in lobby:
+                lobby[addr] = data.strip()
+                print(f"{lobby[addr]} has joined the lobby.")
+                conn.sendall(f"Welcome {lobby[addr]}!".encode('utf-8'))
+            else:
+                print(f"Message from {lobby[addr]}: {data.strip()}")
+        else:
+            print(f"Closing connection to {addr}")
+            sel.unregister(conn)
+            conn.close()
+            if addr in lobby:
+                print(f"{lobby[addr]} has left the lobby.")
+                del lobby[addr]
+    except Exception as e:
+        print(f"Error: {e}")
 
 if len(sys.argv) != 3:
     print("usage: ", sys.argv[0], "host port")
@@ -22,8 +48,11 @@ try:
     while True:
         events = sel.select(timeout=None)
         for key, mask in events:
-            print("client 1")
+            if key.data is None:
+                accept_connection(key.fileobj)
+            else:
+                handle_client(key.fileobj, key.data)
 except KeyboardInterrupt:
-    print("caught keyboard interrupt, exiting")
+    print("Caught keyboard interrupt, exiting")
 finally:
     sel.close()
