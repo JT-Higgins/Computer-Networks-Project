@@ -57,7 +57,7 @@ try:
                 handle_connection(sock, data, username )
             if mask & selectors.EVENT_READ:
                 handle_connection(sock, data, username)
-        game_action(input("Client: "))
+                game_action(input("Client: "))
 except KeyboardInterrupt:
     print("Caught keyboard interrupt, exiting")
 finally:
