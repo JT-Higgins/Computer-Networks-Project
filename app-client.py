@@ -12,6 +12,19 @@ def start_connection(host, port):
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(sock, events, data={"addr": addr, "outgoing": None, "sent_username": False})
 
+def close_connection():
+    sock.close()
+    sys.exit(1)
+
+def game_action(input1):
+    if input1.lower() == 'q':
+        close_connection()
+    elif input1.lower() == 's':
+        print('starting game')
+    else:
+        print('Re enter the your input')
+        game_action(input("Client: ")) 
+        
 def handle_connection(sock, data, username):
     if not data["sent_username"]:
         sock.sendall(username.encode('utf-8'))
@@ -41,10 +54,12 @@ try:
             sock = key.fileobj
             data = key.data
             if mask & selectors.EVENT_WRITE:
-                handle_connection(sock, data, username)
+                handle_connection(sock, data, username )
             if mask & selectors.EVENT_READ:
                 handle_connection(sock, data, username)
+        game_action(input("Client: "))
 except KeyboardInterrupt:
     print("Caught keyboard interrupt, exiting")
 finally:
+    print('close')
     sel.close()

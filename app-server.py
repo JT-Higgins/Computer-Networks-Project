@@ -18,7 +18,9 @@ def handle_client(conn, addr):
             if addr not in lobby:
                 lobby[addr] = data.strip()
                 print(f"{lobby[addr]} has joined the lobby.")
-                conn.sendall(f"Welcome {lobby[addr]}!".encode('utf-8'))
+                conn.sendall(f"Welcome {lobby[addr]}!\n".encode('utf-8'))
+                conn.sendall(f"Press s to start the game.\n".encode('utf-8'))
+                conn.sendall(f"Press q to quit the game.\n".encode('utf-8'))
             else:
                 print(f"Message from {lobby[addr]}: {data.strip()}")
         else:
