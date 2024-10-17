@@ -22,7 +22,10 @@ def handle_client(conn, addr):
                 conn.sendall(f"Press s to start the game.\n".encode('utf-8'))
                 conn.sendall(f"Press q to quit the game.\n".encode('utf-8'))
             else:
-                print(f"Message from {lobby[addr]}: {data.strip()}")
+                if(data.strip()=="s"):
+                    print("Starting game baby")
+                else:
+                    print(f"Message from {lobby[addr]}: {data.strip()}")
         else:
             print(f"Closing connection to {addr}")
             sel.unregister(conn)

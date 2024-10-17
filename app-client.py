@@ -21,6 +21,7 @@ def game_action(input1):
         close_connection()
     elif input1.lower() == 's':
         print('starting game')
+        sock.sendall(input1.encode('utf-8'))
     else:
         print('Re enter the your input')
         game_action(input("Client: ")) 
