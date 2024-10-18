@@ -10,21 +10,33 @@ def start_connection(host, port):
     sock.setblocking(False)
     sock.connect_ex(addr)
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
-    sel.register(sock, events, data={"addr": addr, "outgoing": None, "sent_username": False})
+    sel.register(sock, events, data={"addr": addr, "outgoing": None, "sent_username": False,"sent_start_game":False})
 
 def close_connection():
     sock.close()
     sys.exit(1)
 
-def game_action(input1):
-    if input1.lower() == 'q':
-        close_connection()
-    elif input1.lower() == 's':
-        print('starting game')
-        sock.sendall(input1.encode('utf-8'))
+def game_action(sock,data,input1):
+    if data["sent_start_game"]:
+        if input1 == "":
+            input1 = input("Client: ")
+        if input1.lower() == 'q':
+            close_connection()
+        elif input1.lower() == 's':
+            print('starting game')
+            data["sent_start_game"] = False
+            sock.sendall(input1.encode('utf-8'))
+        else:
+            print('Re enter the your input')
+            game_action(sock,data,input("Client: ")) 
     else:
-        print('Re enter the your input')
-        game_action(input("Client: ")) 
+        try:
+            response = sock.recv(1024).decode('utf-8')
+            if response:
+                print(response)
+                data["sent_start_game"] = True
+        except BlockingIOError:
+            pass
         
 def handle_connection(sock, data, username):
     if not data["sent_username"]:
@@ -47,6 +59,7 @@ host, port = sys.argv[1], int(sys.argv[2])
 start_connection(host, port)
 
 username = input("What do you want your username to be? ")
+input1 = ""
 
 try:
     while True:
@@ -55,10 +68,11 @@ try:
             sock = key.fileobj
             data = key.data
             if mask & selectors.EVENT_WRITE:
+                game_action(sock,data,input1)
                 handle_connection(sock, data, username )
             if mask & selectors.EVENT_READ:
                 handle_connection(sock, data, username)
-                game_action(input("Client: "))
+                game_action(sock,data,input1)
 except KeyboardInterrupt:
     print("Caught keyboard interrupt, exiting")
 finally:
