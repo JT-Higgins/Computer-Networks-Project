@@ -1,0 +1,7 @@
+.game-room {
+    background-image: url('/Background-Image.jpg');
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+  }
+  

@@ -1,63 +1,34 @@
-import sys
-import socket
-import selectors
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from flask_socketio import SocketIO, emit, join_room
+import random
 
-sel = selectors.DefaultSelector()
-lobby = {} 
+app = Flask(__name__)
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-def accept_connection(sock):
-    conn, addr = sock.accept() 
-    print(f"Accepted connection from {addr}")
-    conn.setblocking(False)
-    sel.register(conn, selectors.EVENT_READ, data=addr)
+lobbies = {}
 
-def handle_client(conn, addr):
-    try:
-        data = conn.recv(1024).decode('utf-8')
-        if data:
-            if addr not in lobby:
-                lobby[addr] = data.strip()
-                print(f"{lobby[addr]} has joined the lobby.")
-                conn.sendall(f"Welcome {lobby[addr]}!\n".encode('utf-8'))
-                conn.sendall(f"Press s to start the game.\n".encode('utf-8'))
-                conn.sendall(f"Press q to quit the game.\n".encode('utf-8'))
-            else:
-                if(data.strip()=="s"):
-                    print("Starting game baby")
-                else:
-                    print(f"Message from {lobby[addr]}: {data.strip()}")
-        else:
-            print(f"Closing connection to {addr}")
-            sel.unregister(conn)
-            conn.close()
-            if addr in lobby:
-                print(f"{lobby[addr]} has left the lobby.")
-                del lobby[addr]
-    except Exception as e:
-        print(f"Error: {e}")
+@app.route('/create_game', methods=['POST'])
+def create_game():
+    pin = str(random.randint(1000, 9999))
+    lobbies[pin] = {"players": [], "started": False}
+    return jsonify({"pin": pin})
 
-if len(sys.argv) != 3:
-    print("usage: ", sys.argv[0], "host port")
-    sys.exit(1)
+@app.route('/join_game', methods=['POST'])
+def join_game():
+    pin = request.json.get('pin')
+    username = request.json.get('username')
+    if pin in lobbies and not lobbies[pin]["started"]:
+        lobbies[pin]["players"].append(username)
+        socketio.emit('player_joined', {'players': lobbies[pin]["players"]}, room=pin)
+        return jsonify({"message": f"{username} joined the game.", "players": lobbies[pin]["players"]})
+    return jsonify({"error": "Invalid PIN or game already started"}), 400
 
-host, port = sys.argv[1], int(sys.argv[2])
-lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-lsock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
-lsock.bind((host, port))
-lsock.listen()
-print("listening on", (host, port))
-lsock.setblocking(False)
-sel.register(lsock, selectors.EVENT_READ, data=None)
+@socketio.on('join')
+def on_join(data):
+    pin = data['pin']
+    join_room(pin)
 
-try:
-    while True:
-        events = sel.select(timeout=None)
-        for key, mask in events:
-            if key.data is None:
-                accept_connection(key.fileobj)
-            else:
-                handle_client(key.fileobj, key.data)
-except KeyboardInterrupt:
-    print("Caught keyboard interrupt, exiting")
-finally:
-    sel.close()
+if __name__ == '__main__':
+    socketio.run(app, host="0.0.0.0", port=5000)
