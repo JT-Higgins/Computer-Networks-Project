@@ -1,6 +1,7 @@
 import sys
 import socket
 import selectors
+import time
 
 sel = selectors.DefaultSelector()
 lobby = {}
@@ -17,23 +18,33 @@ def handle_client(conn, addr):
         if data:
             if addr not in lobby:
                 lobby[addr] = data.strip()
-                print(f"{lobby[addr]} has joined the lobby.")
+                conn.sendall(f"{(lobby[addr])} has joined the lobby.\n".encode('utf-8'))
                 conn.sendall(f"----- Lobby -----\n".encode('utf-8'))
                 conn.sendall(f"Welcome {lobby[addr]}!\n".encode('utf-8'))
+                time.sleep(10)
+                for person in lobby:
+                    conn.sendall(f"{(lobby[person])} has joined the lobby.\n".encode('utf-8'))
                 conn.sendall("Press 's' to start the game.\n".encode('utf-8'))
                 conn.sendall("Press 'q' to quit.\n".encode('utf-8'))
             else:
                 if data.strip().lower() == 's':
                     print(f"{lobby[addr]} has started the game.")
-                    conn.sendall("Game started!\n".encode('utf-8'))
+                    conn.sendall(f"This is a test. Send the letter 'a'!\n".encode('utf-8'))
                 elif data.strip().lower() == 'q':
                     print(f"{lobby[addr]} has quit.")
-                    sel.unregister(conn)
-                    conn.close()
-                    del lobby[addr]
+                    conn.sendall(f"{(lobby[addr])} has left the lobby.\n".encode('utf-8'))
+                    disconnect_client(conn, addr)
                 else:
-                    print(f"Message from {lobby[addr]}: {data.strip()}")
-                    conn.sendall(f"Server received: {data.strip()}\n".encode('utf-8'))
+                    clientAnswer = data.strip()
+                    if clientAnswer == 'a' or clientAnswer == 'b' or clientAnswer == 'c' or clientAnswer == 'd':
+                        if clientAnswer == 'a':
+                            print(f"Correct answer from {lobby[addr]}")
+                            conn.sendall("Correct answer!\n".encode('utf-8'))
+                        else:
+                            print(f"Incorrect answer from {lobby[addr]}")
+                            conn.sendall("Incorrect answer, try again.\n".encode('utf-8'))
+                    else:
+                        conn.sendall("Invalid answer! Please enter a, b, c, d, or q to quit\n".encode('utf-8'))
         else:
             disconnect_client(conn, addr)
     except Exception as e:

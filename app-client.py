@@ -1,6 +1,7 @@
 import sys
 import socket
 import selectors
+import time
 
 sel = selectors.DefaultSelector()
 
@@ -27,7 +28,7 @@ def game_action(sock, data):
                 sock.sendall(input1.encode('utf-8'))
                 close_connection(sock)
             elif input1.lower() == 's':
-                print("Starting game...")
+                print("Starting game")
                 data["sent_start_game"] = True
                 sock.sendall(input1.encode('utf-8'))
             else:
@@ -35,9 +36,21 @@ def game_action(sock, data):
         else:
             # Handle game communication
             while True:
-                input_msg = input("Player: ")
-                sock.sendall(input_msg.encode('utf-8'))
                 try:
+                    question = sock.recv(1024).decode('utf-8')
+                    print(question)
+                    input_msg = input("Player: ")
+                    if input_msg == 'a' or input_msg == 'b' or input_msg == 'c' or input_msg == 'd':
+                        print("Sending", input_msg, "to Server!")
+                        sock.sendall(input_msg.encode('utf-8'))
+                    elif input_msg == 'q':
+                        print("Quitting Game!")
+                        sock.sendall(input_msg.encode('utf-8'))
+                        close_connection()
+                    else:
+                        print("Invalid answer! Please enter a, b, c, d, or q to quit")
+                        input_msg = input("Player: ")
+                        sock.sendall(input_msg.encode('utf-8'))
                     response = sock.recv(1024).decode('utf-8')
                     if response:
                         print(f"Server: {response}")
