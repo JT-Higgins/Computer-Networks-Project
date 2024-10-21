@@ -21,7 +21,7 @@ def handle_client(conn, addr):
                 conn.sendall(f"{(lobby[addr])} has joined the lobby.\n".encode('utf-8'))
                 conn.sendall(f"----- Lobby -----\n".encode('utf-8'))
                 conn.sendall(f"Welcome {lobby[addr]}!\n".encode('utf-8'))
-                time.sleep(10)
+                time.sleep(2)
                 for person in lobby:
                     conn.sendall(f"{(lobby[person])} has joined the lobby.\n".encode('utf-8'))
                 conn.sendall("Press 's' to start the game.\n".encode('utf-8'))
@@ -29,7 +29,10 @@ def handle_client(conn, addr):
             else:
                 if data.strip().lower() == 's':
                     print(f"{lobby[addr]} has started the game.")
-                    conn.sendall(f"This is a test. Send the letter 'a'!\n".encode('utf-8'))
+                    # Time to give user a second before question appears. Will have to sync at some point so all lobby members are sent in at same time.
+                    time.sleep(2)
+                    # Here we could have a method that grabs the questions and prompts the users with the question and answer choices.
+                    conn.sendall(f"What class are we building this game for?\n a.) CS462\n b.) CS414\n c.) CS457\n d.) CS440".encode('utf-8'))
                 elif data.strip().lower() == 'q':
                     print(f"{lobby[addr]} has quit.")
                     conn.sendall(f"{(lobby[addr])} has left the lobby.\n".encode('utf-8'))
@@ -37,12 +40,14 @@ def handle_client(conn, addr):
                 else:
                     clientAnswer = data.strip()
                     if clientAnswer == 'a' or clientAnswer == 'b' or clientAnswer == 'c' or clientAnswer == 'd':
-                        if clientAnswer == 'a':
+                        # I'm thinking maybe we can have a method that parses a file or some data structure that stores the questions and respective answers. 
+                        # This would be where we would grab the correct answer for the question asked and do the comparisons.
+                        if clientAnswer == 'c':
                             print(f"Correct answer from {lobby[addr]}")
-                            conn.sendall("Correct answer!\n".encode('utf-8'))
+                            conn.sendall(f"Correct answer {lobby[addr]}!\n".encode('utf-8'))
                         else:
                             print(f"Incorrect answer from {lobby[addr]}")
-                            conn.sendall("Incorrect answer, try again.\n".encode('utf-8'))
+                            conn.sendall("Incorrect. Correct answer was c.\n".encode('utf-8'))
                     else:
                         conn.sendall("Invalid answer! Please enter a, b, c, d, or q to quit\n".encode('utf-8'))
         else:
