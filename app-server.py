@@ -26,7 +26,6 @@ def handle_client(conn, addr):
                 if data.strip().lower() == 's':
                     print(f"{lobby[addr]} has started the game.")
                     conn.sendall("Game started!\n".encode('utf-8'))
-                    game_in_progress(conn, addr)
                 elif data.strip().lower() == 'q':
                     print(f"{lobby[addr]} has quit.")
                     sel.unregister(conn)
@@ -39,20 +38,6 @@ def handle_client(conn, addr):
             disconnect_client(conn, addr)
     except Exception as e:
         print(f"Error: {e}")
-        disconnect_client(conn, addr)
-
-def game_in_progress(conn, addr):
-    try:
-        while True:
-            data = conn.recv(1024).decode('utf-8')
-            if data:
-                print(f"Game message from {lobby[addr]}: {data.strip()}")
-                conn.sendall(f"Server: {data.strip()}\n".encode('utf-8'))
-            else:
-                break
-    except Exception as e:
-        print(f"Game error: {e}")
-    finally:
         disconnect_client(conn, addr)
 
 def disconnect_client(conn, addr):
