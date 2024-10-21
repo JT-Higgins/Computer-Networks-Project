@@ -41,7 +41,6 @@ def game_action(sock, data):
                     print(question)
                     input_msg = input("Player: ")
                     if input_msg == 'a' or input_msg == 'b' or input_msg == 'c' or input_msg == 'd':
-                        print("Sending", input_msg, "to Server!")
                         sock.sendall(input_msg.encode('utf-8'))
                     elif input_msg == 'q':
                         print("Quitting Game!")
