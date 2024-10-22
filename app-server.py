@@ -5,6 +5,16 @@ import time
 
 sel = selectors.DefaultSelector()
 lobby = {}
+lobbyStatus = []
+lobbyAddStatus = []
+
+def add_lobby_mangment(action,addr):
+    encoded_action = (f"{lobby[addr]} {action}.\n")
+    lobbyStatus.append(encoded_action.encode('utf-8'))
+
+def dump_lobby_mangment(conn):
+    while len(lobbyStatus) > 0:
+        conn.sendall(lobbyStatus.pop(0))
 
 def accept_connection(sock):
     conn, addr = sock.accept()
@@ -18,24 +28,24 @@ def handle_client(conn, addr):
         if data:
             if addr not in lobby:
                 lobby[addr] = data.strip()
-                conn.sendall(f"{(lobby[addr])} has joined the lobby.\n".encode('utf-8'))
+                print(f"{lobby[addr]} has joined the lobby.")
                 conn.sendall(f"----- Lobby -----\n".encode('utf-8'))
                 conn.sendall(f"Welcome {lobby[addr]}!\n".encode('utf-8'))
-                time.sleep(2)
-                for person in lobby:
-                    conn.sendall(f"{(lobby[person])} has joined the lobby.\n".encode('utf-8'))
                 conn.sendall("Press 's' to start the game.\n".encode('utf-8'))
                 conn.sendall("Press 'q' to quit.\n".encode('utf-8'))
+                for person in lobby:
+                    if(lobby[person] != lobbyAddStatus and lobby[person] != lobby[addr]):
+                        add_lobby_mangment(" has joined the lobby.",addr)
             else:
                 if data.strip().lower() == 's':
                     print(f"{lobby[addr]} has started the game.")
+                    dump_lobby_mangment(conn)
                     # Time to give user a second before question appears. Will have to sync at some point so all lobby members are sent in at same time.
-                    time.sleep(2)
                     # Here we could have a method that grabs the questions and prompts the users with the question and answer choices.
                     conn.sendall(f"What class are we building this game for?\n a.) CS462\n b.) CS414\n c.) CS457\n d.) CS440".encode('utf-8'))
                 elif data.strip().lower() == 'q':
                     print(f"{lobby[addr]} has quit.")
-                    conn.sendall(f"{(lobby[addr])} has left the lobby.\n".encode('utf-8'))
+                    add_lobby_mangment(" has left the lobby.",addr)
                     disconnect_client(conn, addr)
                 else:
                     clientAnswer = data.strip()
@@ -45,11 +55,14 @@ def handle_client(conn, addr):
                         if clientAnswer == 'c':
                             print(f"Correct answer from {lobby[addr]}")
                             conn.sendall(f"Correct answer {lobby[addr]}!\n".encode('utf-8'))
+                            dump_lobby_mangment(conn)
                         else:
                             print(f"Incorrect answer from {lobby[addr]}")
                             conn.sendall("Incorrect. Correct answer was c.\n".encode('utf-8'))
+                            dump_lobby_mangment(conn)
                     else:
                         conn.sendall("Invalid answer! Please enter a, b, c, d, or q to quit\n".encode('utf-8'))
+                        dump_lobby_mangment(conn)
         else:
             disconnect_client(conn, addr)
     except Exception as e:
