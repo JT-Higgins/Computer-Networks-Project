@@ -8,8 +8,13 @@ lobby = {}
 lobbyStatus = []
 lobbyAddStatus = []
 
-def add_lobby_mangment(action,addr):
-    encoded_action = (f"{lobby[addr]} {action}.\n")
+def add_lobby_mangment(action,person,addr):
+    #This is when we figure out to add people in lobby or say someone has joined
+    #if(lobby[person] != lobby[addr]and action == " has joined the lobby."):
+        #encoded_action = (f"{lobby[person]} {action}\n")
+        #lobbyStatus.append(encoded_action.encode('utf-8'))
+    #else:
+    encoded_action = (f"{lobby[addr]} {action}\n")
     lobbyStatus.append(encoded_action.encode('utf-8'))
 
 def dump_lobby_mangment(conn):
@@ -33,9 +38,9 @@ def handle_client(conn, addr):
                 conn.sendall(f"Welcome {lobby[addr]}!\n".encode('utf-8'))
                 conn.sendall("Press 's' to start the game.\n".encode('utf-8'))
                 conn.sendall("Press 'q' to quit.\n".encode('utf-8'))
-                for person in lobby:
-                    if(lobby[person] != lobbyAddStatus and lobby[person] != lobby[addr]):
-                        add_lobby_mangment(" has joined the lobby.",addr)
+                #This is for adding the people in the lobby
+                #for person in lobby:
+                    #add_lobby_mangment(" has joined the lobby.",person,addr)
             else:
                 if data.strip().lower() == 's':
                     print(f"{lobby[addr]} has started the game.")
@@ -45,7 +50,7 @@ def handle_client(conn, addr):
                     conn.sendall(f"What class are we building this game for?\n a.) CS462\n b.) CS414\n c.) CS457\n d.) CS440".encode('utf-8'))
                 elif data.strip().lower() == 'q':
                     print(f"{lobby[addr]} has quit.")
-                    add_lobby_mangment(" has left the lobby.",addr)
+                    add_lobby_mangment(" has left the lobby.","",addr)
                     disconnect_client(conn, addr)
                 else:
                     clientAnswer = data.strip()
@@ -60,9 +65,11 @@ def handle_client(conn, addr):
                             print(f"Incorrect answer from {lobby[addr]}")
                             conn.sendall("Incorrect. Correct answer was c.\n".encode('utf-8'))
                             dump_lobby_mangment(conn)
+                            conn.sendall(f"".encode('utf-8'))
                     else:
                         conn.sendall("Invalid answer! Please enter a, b, c, d, or q to quit\n".encode('utf-8'))
                         dump_lobby_mangment(conn)
+                        conn.sendall(f"".encode('utf-8'))
         else:
             disconnect_client(conn, addr)
     except Exception as e:
@@ -98,6 +105,7 @@ try:
                 accept_connection(key.fileobj)
             else:
                 handle_client(key.fileobj, key.data)
+                break
 except KeyboardInterrupt:
     print("Caught keyboard interrupt, exiting")
 finally:
