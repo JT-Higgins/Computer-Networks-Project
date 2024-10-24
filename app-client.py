@@ -1,7 +1,6 @@
 import sys
 import socket
 import selectors
-import time
 
 sel = selectors.DefaultSelector()
 
@@ -18,6 +17,15 @@ def close_connection(sock):
     sock.close()
     sys.exit(1)
 
+def wait_for_question(sock):
+    question = sock.recv(1024).decode('utf-8')
+    while(question[len(question)-7:len(question)-1] == "lobby."):
+        if(question[len(question)-7:len(question)-1] == "lobby."):
+            print(f"Sever: {question}")
+        question = sock.recv(1024).decode('utf-8')
+    return question
+
+
 def game_action(sock, data):
     while True:
         if not data["sent_start_game"]:
@@ -26,7 +34,9 @@ def game_action(sock, data):
             if input1.lower() == 'q':
                 print("Quitting game.")
                 sock.sendall(input1.encode('utf-8'))
-                close_connection(sock)
+                False
+                key.data = 1
+                break
             elif input1.lower() == 's':
                 print("Starting game")
                 data["sent_start_game"] = True
@@ -37,22 +47,24 @@ def game_action(sock, data):
             # Handle game communication
             while True:
                 try:
-                    question = sock.recv(1024).decode('utf-8')
-                    print(question)
+
+                    question = wait_for_question(sock)
+                    print(f"Sever: {question} ")  
                     input_msg = input("Player: ")
                     if input_msg == 'a' or input_msg == 'b' or input_msg == 'c' or input_msg == 'd':
                         sock.sendall(input_msg.encode('utf-8'))
                     elif input_msg == 'q':
                         print("Quitting Game!")
                         sock.sendall(input_msg.encode('utf-8'))
-                        close_connection()
+                        False
+                        key.data = 1
+                        break
                     else:
                         print("Invalid answer! Please enter a, b, c, d, or q to quit")
                         input_msg = input("Player: ")
                         sock.sendall(input_msg.encode('utf-8'))
-                    response = sock.recv(1024).decode('utf-8')
-                    if response:
-                        print(f"Server: {response}")
+                    response = wait_for_question(sock)
+                    print(f"Sever: {response}")
                 except BlockingIOError:
                     pass
 
@@ -65,7 +77,7 @@ def handle_connection(sock, data, username):
             response = sock.recv(1024).decode('utf-8')
             if response:
                 print(response.strip())
-                if "Press 's' to start the game" in response:
+                if "Press 'q' to quit." in response:
                     game_action(sock, data)
         except BlockingIOError:
             pass
