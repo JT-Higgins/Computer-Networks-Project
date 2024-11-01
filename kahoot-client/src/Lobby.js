@@ -7,16 +7,15 @@ import BackgroundImage from './assets/Background-Image.jpg';
 const Lobby = () => {
   const [pin, setPin] = useState('');
   const [username, setUsername] = useState('');
-  const [gamePin, setGamePin] = useState(null);
+  const [isCreator, setIsCreator] = useState(false);
   const navigate = useNavigate();
 
   const handleCreateGame = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/create_game');
-      console.log(response)
-      const gamePin = response.data.pin; 
-      setGamePin(gamePin);
-      navigate(`/game/${gamePin}`);
+      const response = await axios.post('http://localhost:5000/create_game', { creator: username });
+      const gamePin = response.data.pin;
+      setIsCreator(true);
+      navigate(`/game/${gamePin}`, { state: { isCreator: true, username } });
     } catch (error) {
       console.error("Error creating game:", error);
     }
@@ -25,7 +24,7 @@ const Lobby = () => {
   const handleJoinGame = async () => {
     try {
       const response = await axios.post('http://localhost:5000/join_game', { pin, username });
-      navigate(`/game/${pin}`);
+      navigate(`/game/${pin}`, { state: { isCreator: false, username } });
     } catch (error) {
       alert('Error joining game: ' + error.response.data.error);
     }
@@ -134,12 +133,6 @@ const Lobby = () => {
         >
           Create Game
         </Button>
-
-        {gamePin && (
-          <Typography variant="h6" sx={{ mt: 2 }}>
-            Your game PIN: {gamePin}
-          </Typography>
-        )}
       </Box>
     </Box>
   );
