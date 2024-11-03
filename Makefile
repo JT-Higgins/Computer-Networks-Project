@@ -1,19 +1,14 @@
 .PHONY: all server client clean
 
-# Define the host and port variables
-HOST = localhost
-PORT = 8080
-
-# Default target
-all: server
-
 # Run the server
 server:
-	python3 app-server.py $(HOST) $(PORT)
+	@echo "Starting server..."
+	python3 app-server.py
 
 # Run the client
 client:
-	python3 app-client.py $(HOST) $(PORT)
+	@echo "Starting client..."
+	cd kahoot-client && [ -d node_modules ] || npm install && npm start
 
 # Clean up (if needed)
 clean:
