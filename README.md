@@ -3,9 +3,10 @@
 This is a multiplayer Trivia Crack game implemented using Flask (Python) for the backend and React with Socket.IO for real-time communication on the frontend. This version includes a game lobby, real-time updates, and a host-controlled question sequence.
 
 ## How to play:
-1. **Start the server:** Run the `app-server.py` script.
-2. **Connect clients:** In a seperate terminal, navigate to the src directoy and run the `npm install` and the `npm start`.
-3. **Play the game:** The server has the questions. The clients will answer the questions from the server.
+1. **Install the required libraries** Run `pip install -r requirements.txt` in your terminal
+2. **Start the server:** Run the `make server` script.
+3. **Connect clients:** In a seperate terminal, run the `make client` script.
+4. **Play the game:** The server has the questions. The clients will answer the questions from the server.
 
 ## Technologies used:
 
