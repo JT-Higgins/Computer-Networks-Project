@@ -1,0 +1,11 @@
+Question,Option1,Option2,Option3,Option4,CorrectAnswer
+"What is the result of 10 % 3?", "0", "1", "2", "3", "1"
+"What is the default port for HTTP?", "21", "22", "80", "443", "80"
+"Which loop repeats until a condition is false?", "for", "if", "while", "switch", "while"
+"What data type is typically used for text?", "Integer", "Boolean", "String", "Float", "String"
+"What is used to style HTML?", "Python", "CSS", "JavaScript", "SQL", "CSS"
+"Which function is used to find the length of a string in Python?", "len()", "length()", "size()", "count()", "len()"
+"In JavaScript, which method is used to add an element to an array?", "push()", "pop()", "add()", "append()", "push()"
+"Which operator is used for addition in most programming languages?", "+", "-", "*", "/", "+"
+"What does the 'return' statement do in a function?", "Ends the program", "Stops the function execution", "Returns a value from the function", "Prints a message", "Returns a value from the function"
+"Which of these is NOT a valid data type in Python?", "integer", "string", "character", "boolean", "character"

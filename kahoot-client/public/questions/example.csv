@@ -9,8 +9,3 @@ Question,Option1,Option2,Option3,Option4,CorrectAnswer
 "Which command is used to print in Python?", "echo", "println", "print", "printf", "print"
 "What does 1 represent in Binary?", "True", "False", "Negative", "Zero", "True"
 "What symbol is used to denote comments in Python?", "#", "//", "/* */", "<!-- -->", "#"
-"What is the result of 10 % 3?", "0", "1", "2", "3", "1"
-"What is the default port for HTTP?", "21", "22", "80", "443", "80"
-"Which loop repeats until a condition is false?", "for", "if", "while", "switch", "while"
-"What data type is typically used for text?", "Integer", "Boolean", "String", "Float", "String"
-"What is used to style HTML?", "Python", "CSS", "JavaScript", "SQL", "CSS"
