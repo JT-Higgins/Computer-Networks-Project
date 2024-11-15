@@ -1,3 +1,4 @@
+// GameRoom.js
 import React, { useEffect, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { Box, Typography, Stack, Button } from '@mui/material';
@@ -7,7 +8,11 @@ import BackgroundImage from './assets/Background-Image.jpg';
 import HostView from './HostView';
 import PlayerView from './PlayerView';
 
-const socket = io('http://localhost:5000', {
+const serverIP = process.env.REACT_APP_SERVER_IP || 'localhost';
+const serverPort = process.env.REACT_APP_SERVER_PORT || '5000';
+const serverAddress = `http://${serverIP}:${serverPort}`;  // Ensure backticks here
+
+const socket = io(serverAddress, {
   transports: ['websocket', 'polling'],
 });
 
@@ -21,11 +26,11 @@ const GameRoom = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   useEffect(() => {
-    socket.emit('join', { pin });
+    socket.emit('join', { pin, username });
 
     const fetchPlayers = async () => {
       try {
-        const response = await axios.post('http://localhost:5000/join_game', { pin, username });
+        const response = await axios.post(`${serverAddress}/join_game`, { pin, username });
         setPlayers(response.data.players);
       } catch (error) {
         console.error("Error fetching players:", error);
@@ -58,10 +63,8 @@ const GameRoom = () => {
     try {
       const response = await fetch('/questions/example.csv');
       const csvData = await response.text();
-  
-      const parsedQuestions = csvData.split('\n').slice(1).map((line, index) => {
+      const parsedQuestions = csvData.split('\n').slice(1).map((line) => {
         const [question, option1, option2, option3, option4, correctAnswer] = line.split(',');
-  
         return {
           question: String(question || "").replace(/^["\s]+|["\s]+$/g, ''),
           options: [
@@ -73,17 +76,15 @@ const GameRoom = () => {
           correctAnswer: String(correctAnswer || "").replace(/^["\s]+|["\s]+$/g, ''),
         };
       });
-  
-      console.log("Parsed Questions Array:", parsedQuestions);
       setQuestions(parsedQuestions);
     } catch (error) {
       console.error('Error loading questions:', error);
     }
-  };   
+  };
 
   const startGameWithPremadeQuestions = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/start_game_with_premade_questions', { pin });
+      const response = await axios.post(`http://${serverIP}:${serverPort}/start_game_with_premade_questions`, { pin });
       console.log(response.data);
   
       setGameStarted(true);
@@ -91,7 +92,7 @@ const GameRoom = () => {
     } catch (error) {
       console.error("Error starting game with pre-made questions:", error);
     }
-  };   
+  };
 
   const handleNextQuestion = () => {
     const nextIndex = currentQuestionIndex + 1;
@@ -155,15 +156,15 @@ const GameRoom = () => {
             </Button>
           </Box>
         )}
-      {gameStarted && questions.length > 0 ? (
-        isCreator ? (
-          <HostView questions={questions} currentQuestionIndex={currentQuestionIndex} onNext={handleNextQuestion} />
+        {gameStarted && questions.length > 0 ? (
+          isCreator ? (
+            <HostView questions={questions} currentQuestionIndex={currentQuestionIndex} onNext={handleNextQuestion} />
+          ) : (
+            <PlayerView question={questions[currentQuestionIndex]} />
+          )
         ) : (
-          <PlayerView question={questions[currentQuestionIndex]} />
-        )
-      ) : (
-        <Typography variant="h6" color="error">Loading questions...</Typography>
-      )}
+          <Typography variant="h6" color="error">Loading questions...</Typography>
+        )}
       </Box>
     </Box>
   );

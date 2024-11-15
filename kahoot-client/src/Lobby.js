@@ -1,8 +1,13 @@
+// Lobby.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, TextField, Box, Typography } from '@mui/material';
 import axios from 'axios';
 import BackgroundImage from './assets/Background-Image.jpg';
+
+const serverIP = process.env.REACT_APP_SERVER_IP || 'localhost';
+const serverPort = process.env.REACT_APP_SERVER_PORT || '5000';
+const serverAddress = `http://${serverIP}:${serverPort}`;
 
 const Lobby = () => {
   const [pin, setPin] = useState('');
@@ -12,7 +17,7 @@ const Lobby = () => {
 
   const handleCreateGame = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/create_game', { creator: username });
+      const response = await axios.post(`${serverAddress}/create_game`, { creator: username });
       const gamePin = response.data.pin;
       setIsCreator(true);
       navigate(`/game/${gamePin}`, { state: { isCreator: true, username } });
@@ -23,7 +28,7 @@ const Lobby = () => {
 
   const handleJoinGame = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/join_game', { pin, username });
+      const response = await axios.post(`${serverAddress}/join_game`, { pin, username });
       navigate(`/game/${pin}`, { state: { isCreator: false, username } });
     } catch (error) {
       alert('Error joining game: ' + error.response.data.error);
