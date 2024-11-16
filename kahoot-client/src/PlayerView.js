@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Stack } from '@mui/material';
 
 const PlayerView = ({ question }) => {
   const [feedback, setFeedback] = useState("");
+
+  useEffect(() => {
+    setFeedback("");
+  }, [question]);
 
   if (!question) {
     return <Typography variant="h6" color="error">Loading question...</Typography>;

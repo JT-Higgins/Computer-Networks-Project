@@ -162,7 +162,7 @@ const GameRoom = () => {
           <PlayerView question={questions[currentQuestionIndex]} />
         )
       ) : (
-        <Typography variant="h6" color="error">Loading questions...</Typography>
+        <Typography variant="h6"></Typography>
       )}
       </Box>
     </Box>

@@ -3,10 +3,6 @@ import { Box, Typography, Button, Stack } from '@mui/material';
 
 const HostView = ({ questions, currentQuestionIndex, onNext }) => {
   const question = questions[currentQuestionIndex];
-  
-  if (!question) {
-    return <Typography variant="h6" color="error">Loading questions...</Typography>;
-  }
 
   return (
     <Box
