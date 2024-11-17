@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room
 import random
 import os
+import argparse
 
 app = Flask(__name__)
 CORS(app)
@@ -51,4 +52,7 @@ def next_question(data):
     emit('update_question_index', {'currentQuestionIndex': current_question_index}, room=pin)
 
 if __name__ == '__main__':
-    socketio.run(app, host="0.0.0.0", port=5000)
+    parser = argparse.ArgumentParser(description="Run the Flask SocketIO server.")
+    parser.add_argument('--port', type=int, default=5000, help='Port number to run the server on.')
+    args = parser.parse_args()
+    socketio.run(app, host="0.0.0.0", port=args.port)
