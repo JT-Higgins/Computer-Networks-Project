@@ -4,6 +4,7 @@ import { Button, TextField, Box, Typography } from '@mui/material';
 import axios from 'axios';
 import BackgroundImage from './assets/Background-Image.jpg';
 
+//takes in the server and port from start.js and configures it with package.json
 const SERVER_IP = process.env.REACT_APP_SERVER_IP;
 const SERVER_PORT = process.env.REACT_APP_SERVER_PORT;
 const BASE_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
