@@ -4,8 +4,8 @@ This is a multiplayer Trivia Crack game implemented using Flask (Python) for the
 
 ## How to play:
 1. **Install the required libraries** Run `pip install -r requirements.txt` in your terminal
-2. **Start the server:** Run the `make server` script.
-3. **Connect clients:** In a seperate terminal, run the `make client` script.
+2. **Start the server:** python3 app-server.py <port>
+3. **Connect clients:** npm start <ip> <port>
 4. **Play the game:** The server has the questions. The clients will answer the questions from the server.
 
 ## Technologies used:

@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_socketio import SocketIO, emit, join_room
 import random
 import os
+import sys
 
 app = Flask(__name__)
 CORS(app)
@@ -51,4 +52,18 @@ def next_question(data):
     emit('update_question_index', {'currentQuestionIndex': current_question_index}, room=pin)
 
 if __name__ == '__main__':
-    socketio.run(app, host="0.0.0.0", port=5000)
+    port = 5000
+
+    if len(sys.argv) < 2:
+        print("Error: Port number is required. Usage: python3 server.py <port>")
+        sys.exit(1)
+
+    try:
+        port = int(sys.argv[1])
+        print('The port you entered:', port)
+    except ValueError:
+        print("Error: Invalid port number. Port must be an integer.")
+        sys.exit(1)
+
+    # Run the server
+    socketio.run(app, host="0.0.0.0", port=port)
