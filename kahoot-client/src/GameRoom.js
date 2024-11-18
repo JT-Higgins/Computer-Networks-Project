@@ -7,7 +7,14 @@ import BackgroundImage from './assets/Background-Image.jpg';
 import HostView from './HostView';
 import PlayerView from './PlayerView';
 
-const socket = io('http://localhost:5000', {
+//takes in the server and port from start.js and configures it with package.json
+const SERVER_IP = process.env.REACT_APP_SERVER_IP;
+const SERVER_PORT = process.env.REACT_APP_SERVER_PORT;
+const BASE_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
+
+console.log(`Connecting to: ${BASE_URL}`);
+
+const socket = io(`${BASE_URL}`, {
   transports: ['websocket', 'polling'],
 });
 
@@ -25,7 +32,7 @@ const GameRoom = () => {
 
     const fetchPlayers = async () => {
       try {
-        const response = await axios.post('http://localhost:5000/join_game', { pin, username });
+        const response = await axios.post(`${BASE_URL}/join_game`, { pin, username });
         setPlayers(response.data.players);
       } catch (error) {
         console.error("Error fetching players:", error);
@@ -83,7 +90,7 @@ const GameRoom = () => {
 
   const startGameWithPremadeQuestions = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/start_game_with_premade_questions', { pin });
+      const response = await axios.post(`${BASE_URL}/start_game_with_premade_questions`, { pin });
       console.log(response.data);
   
       setGameStarted(true);

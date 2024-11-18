@@ -4,6 +4,16 @@ import { Button, TextField, Box, Typography } from '@mui/material';
 import axios from 'axios';
 import BackgroundImage from './assets/Background-Image.jpg';
 
+//takes in the server and port from start.js and configures it with package.json
+const SERVER_IP = process.env.REACT_APP_SERVER_IP;
+const SERVER_PORT = process.env.REACT_APP_SERVER_PORT;
+const BASE_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
+
+console.log('REACT_APP_SERVER_IP:', process.env.REACT_APP_SERVER_IP);
+console.log('REACT_APP_SERVER_PORT:', process.env.REACT_APP_SERVER_PORT);
+
+console.log(`Connecting to: ${BASE_URL}`);
+
 const Lobby = () => {
   const [pin, setPin] = useState('');
   const [username, setUsername] = useState('');
@@ -12,7 +22,7 @@ const Lobby = () => {
 
   const handleCreateGame = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/create_game', { creator: username });
+      const response = await axios.post(`${BASE_URL}/create_game`, { creator: username });
       const gamePin = response.data.pin;
       setIsCreator(true);
       navigate(`/game/${gamePin}`, { state: { isCreator: true, username } });
@@ -23,7 +33,7 @@ const Lobby = () => {
 
   const handleJoinGame = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/join_game', { pin, username });
+      const response = await axios.post(`${BASE_URL}/join_game`, { pin, username });
       navigate(`/game/${pin}`, { state: { isCreator: false, username } });
     } catch (error) {
       alert('Error joining game: ' + error.response.data.error);
