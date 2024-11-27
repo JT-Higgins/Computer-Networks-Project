@@ -34,7 +34,7 @@ const HostView = ({ questions, currentQuestionIndex, onNext }) => {
         fullWidth
         sx={{ mt: 2 }}
       >
-        Next Question
+        Exit
       </Button>
     </Box>
   );

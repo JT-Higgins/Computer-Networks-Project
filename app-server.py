@@ -36,6 +36,15 @@ def start_game_with_premade_questions():
         return jsonify({"message": "Game started with pre-made questions"})
     return jsonify({"error": "Lobby not found"}), 404
 
+@app.route('/start_game_with_created_questions', methods=['POST'])
+def start_game_with_created_questions():
+    pin = request.json.get('pin')
+    if pin in lobbies:
+        lobbies[pin]["started"] = True
+        socketio.emit('game_started', {'message': 'Game started with pre-made questions'}, room=pin)
+        return jsonify({"message": "Game started with pre-made questions"})
+    return jsonify({"error": "Lobby not found"}), 404
+
 @socketio.on('join')
 def on_join(data):
     pin = data['pin']

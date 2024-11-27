@@ -4,8 +4,9 @@ import { Box, Typography, Stack, Button } from '@mui/material';
 import io from 'socket.io-client';
 import axios from 'axios';
 import BackgroundImage from './assets/Background-Image.jpg';
-import HostView from './HostView';
+//import HostView from './HostView';
 import PlayerView from './PlayerView';
+import QuestionGenerator from './QuestionGenerator';
 
 const socket = io('http://localhost:5000', {
   transports: ['websocket', 'polling'],
@@ -93,6 +94,23 @@ const GameRoom = () => {
     }
   };   
 
+  
+
+  const startGameWithCreatingQuestions = async () => {
+    try {
+      const response = await axios.post('http://localhost:5000/start_game_with_premade_questions', { pin });
+      console.log(response.data);
+      setGameStarted(true);
+      setCurrentQuestionIndex(response.data.question)
+    } catch (error) {
+      console.error("Error starting game with pre-made questions:", error);
+    }
+  };
+
+  socket.on('written question', (data) => {
+    setQuestions(response.data.question)
+  });
+
   const handleNextQuestion = () => {
     const nextIndex = currentQuestionIndex + 1;
     if (nextIndex < questions.length) {
@@ -147,7 +165,7 @@ const GameRoom = () => {
             <Button variant="contained" color="primary" fullWidth sx={{ mb: 2 }}>
               Start Game
             </Button>
-            <Button variant="contained" color="secondary" fullWidth sx={{ mb: 2 }}>
+            <Button variant="contained" color="secondary" fullWidth sx={{startGameWithCreatingQuestions }}>
               Create Questions
             </Button>
             <Button variant="contained" color="secondary" fullWidth onClick={startGameWithPremadeQuestions}>
@@ -157,7 +175,7 @@ const GameRoom = () => {
         )}
       {gameStarted && questions.length > 0 ? (
         isCreator ? (
-          <HostView questions={questions} currentQuestionIndex={currentQuestionIndex} onNext={handleNextQuestion} />
+          <QuestionGenerator questions={questions} currentQuestionIndex={currentQuestionIndex} onNext={handleNextQuestion} pin={pin} username={username}/>
         ) : (
           <PlayerView question={questions[currentQuestionIndex]} />
         )
