@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
-import { Box, Typography, Stack, Button, TextField, Modal } from '@mui/material';
+import { Box, Typography, Stack, Button, TextField, Modal, Checkbox, FormControl} from '@mui/material';
 import io from 'socket.io-client';
 import axios from 'axios';
 import BackgroundImage from './assets/Background-Image.jpg';
@@ -29,8 +29,8 @@ const GameRoom = () => {
   const [openModal, setOpenModal] = useState(false);
   const [newQuestion, setNewQuestion] = useState('');
   const [newOptions, setNewOptions] = useState(['', '', '', '']);
-  const [newCorrectAnswer, setNewCorrectAnswer] = useState('');
-
+  const [newCorrectAnswer, setNewCorrectAnswer] = useState([false,false,false,false]);
+  const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
   useEffect(() => {
     socket.emit('join', { pin });
 
@@ -69,16 +69,77 @@ const GameRoom = () => {
     setOpenModal(true);
   };
 
-  const saveCustomQuestion = () => {
-    if (!newQuestion || newOptions.some(opt => !opt) || !newCorrectAnswer) {
+
+  const resetForm= () => {
+    setNewQuestion('');
+    setNewOptions(['','','','']);
+    setNewCorrectAnswer([false,false,false,false]);
+  };
+
+  const customGameConnerCases= () => {
+    if (!newQuestion || newOptions.some(opt => !opt)) {
       alert('Please fill in all fields.');
       return;
     }
+
+    let counter = 0;
+    let index2 = 0;
+    for(let i = 0; i < newCorrectAnswer.length; i++){
+      if(newCorrectAnswer[i]){
+        counter = counter + 1;
+        index2 = i;
+      }
+      if(counter > 1){
+        alert('Only one correct answer can be selected')
+        return;
+      }
+    }
+
+    if(counter == 0){
+      alert('Select one correct ansewer')
+      return;
+    }
+
+    for(let i = 0; i < newOptions.length; i++){
+      if(newOptions[index2] == newOptions[i]  && index2 != i){
+        alert('Can\'t have the right answer written twice')
+        return;
+      }
+    }
+    return index2;
+  };
   
+  const anotherCustomQuestion = () =>{
+
+    let index2 = customGameConnerCases();
+    if(index2 == null){
+      return;
+    }
+
     const questionData = {
       question: newQuestion,
       options: [...newOptions],
-      correctAnswer: newCorrectAnswer,
+      correctAnswer: newOptions[index2],
+    };
+    
+    setQuestions([...questions, questionData]);
+    console.log("Updated Questions State (custom):", [...questions, questionData]);
+    socket.emit('add_question', { pin, question: questionData });
+
+    resetForm();
+    setOpenModal(true);
+  };
+
+  const saveCustomQuestion = () => {
+    let index2 = customGameConnerCases();
+
+    if(index2 == null){
+      return;
+    }
+    const questionData = {
+      question: newQuestion,
+      options: [...newOptions],
+      correctAnswer: newOptions[index2],
     };
   
     setQuestions([...questions, questionData]);
@@ -259,11 +320,22 @@ const GameRoom = () => {
               onChange={(e) => setNewQuestion(e.target.value)}
               margin="normal"
             />
+            <Typography variant="h6" mb={2}>Select the correctAnswer</Typography>
             {[0, 1, 2, 3].map((index) => (
+              <div key={index}> 
+              <Checkbox {...label}
+              checked={newCorrectAnswer[index] || false}
+              value={newCorrectAnswer[index]}
+              onChange={(e) => {
+                const updatedCorrectAnswer = [...newCorrectAnswer];
+                updatedCorrectAnswer[index] = e.target.checked;
+                setNewCorrectAnswer(updatedCorrectAnswer);
+              }}
+              />
               <TextField
                 key={index}
                 label={`Option ${index + 1}`}
-                fullWidth
+                sx={{ m: 1, width: '30ch' }}
                 value={newOptions[index]}
                 onChange={(e) => {
                   const updatedOptions = [...newOptions];
@@ -272,21 +344,23 @@ const GameRoom = () => {
                 }}
                 margin="normal"
               />
+              </div>
             ))}
-            <TextField
-              label="Correct Answer"
-              fullWidth
-              value={newCorrectAnswer}
-              onChange={(e) => setNewCorrectAnswer(e.target.value)}
-              margin="normal"
-            />
             <Button
               variant="contained"
               color="primary"
               onClick={saveCustomQuestion}
-              sx={{ mt: 2 }}
+              sx={{ mt: 1 }}
             >
-              Save Question
+              Use Custom Questions
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={anotherCustomQuestion}
+              sx={{ mt: 1 }}
+            >
+              Add another Question
             </Button>
           </Box>
         </Modal>
