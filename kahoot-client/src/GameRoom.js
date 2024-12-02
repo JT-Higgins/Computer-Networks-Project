@@ -96,7 +96,7 @@ const GameRoom = () => {
     }
 
     if(counter == 0){
-      alert('Select one correct ansewer')
+      alert('Select one correct answer')
       return;
     }
 
