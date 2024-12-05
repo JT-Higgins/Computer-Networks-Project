@@ -6,7 +6,6 @@ import axios from 'axios';
 import BackgroundImage from './assets/Background-Image.jpg';
 import HostView from './HostView';
 import PlayerView from './PlayerView';
-import Lobby from './Lobby';
 
 //takes in the server and port from start.js and configures it with package.json
 const SERVER_IP = process.env.REACT_APP_SERVER_IP;
@@ -15,7 +14,7 @@ const BASE_URL = `http://${SERVER_IP}:${SERVER_PORT}`;
 
 console.log(`Connecting to: ${BASE_URL}`);
 
-export const socket = io(`${BASE_URL}`, {
+const socket = io(`${BASE_URL}`, {
   transports: ['websocket', 'polling'],
 });
 
@@ -31,9 +30,6 @@ const GameRoom = () => {
   const [newQuestion, setNewQuestion] = useState('');
   const [newOptions, setNewOptions] = useState(['', '', '', '']);
   const [newCorrectAnswer, setNewCorrectAnswer] = useState([false,false,false,false]);
-  const [scores, setScores] = useState({});
-  const [gameOver, setGameOver] = useState(false);
-  const [finalScores, setFinalScores] = useState([]);
   const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
   useEffect(() => {
     socket.emit('join', { pin });
@@ -58,34 +54,16 @@ const GameRoom = () => {
     });
 
     socket.on('update_question_index', (data) => {
+      setGameStarted(true);
       setCurrentQuestionIndex(data.currentQuestionIndex);
     });
 
-    socket.on('update_scores', (data) => {
-      setScores(data.scores); // This sets the scores state with data from the server
-    });
-
-    socket.on('game_over', (scores) => {
-      console.log('Game over event received:', scores);
-      if (Array.isArray(scores)) {
-        setFinalScores(scores);
-      } else {
-        console.error('Invalid scores data:', scores);
-      }
-      setGameOver(true);
-    });
-
-    // socket.on('start_game_with_custom_questions', (data) => {
-    //   setQuestions(data.questions);
-    // });
+    
 
     return () => {
       socket.off('update_player_list');
       socket.off('game_started');
       socket.off('update_question_index');
-      socket.off('update_scores');
-      socket.off('game_over');
-      // socket.off('start_game_with_custom_questions');
       socket.disconnect();
     };
   }, [pin, username]);
@@ -149,15 +127,25 @@ const GameRoom = () => {
     
     setQuestions([...questions, questionData]);
     console.log("Updated Questions State (custom):", [...questions, questionData]);
-    // socket.emit('add_question', { pin, question: questionData });
+    socket.emit('add_question', { pin, question: questions });
 
     resetForm();
     setOpenModal(true);
   };
 
-  const saveCustomQuestion = () => {
-    let index2 = customGameConnerCases();
+  const setQues = async () => {
+    setGameStarted(true);
+    try {
+      const response = await axios.post(`${BASE_URL}/get_custom_questions`, { questions: questions });
+      setQuestions(response.data.questions);
+    } catch (error) {
+      console.error("Error fetching players:", error);
+    }
+  };
 
+  const saveCustomQuestion = async () => {
+    let index2 = customGameConnerCases();
+ 
     if(index2 == null){
       return;
     }
@@ -171,8 +159,7 @@ const GameRoom = () => {
     console.log("Updated Questions State (custom):", [...questions, questionData]);
   
     setOpenModal(false);
-  
-    socket.emit('add_question', { pin, question: questionData });
+    setQues();
   };
 
   const loadQuestions = async () => {
@@ -212,15 +199,15 @@ const GameRoom = () => {
     } catch (error) {
       console.error("Error starting game with pre-made questions:", error);
     }
-  }; 
+  };   
 
   const handleNextQuestion = () => {
     const nextIndex = currentQuestionIndex + 1;
     if (nextIndex < questions.length) {
       setCurrentQuestionIndex(nextIndex);
-      socket.emit('next_question', { pin, currentQuestionIndex: nextIndex, questionsLength: questions.length });
+      socket.emit('next_question', { pin, currentQuestionIndex: nextIndex });
     } else {
-      socket.emit('game_over', { pin });
+      alert("No more questions!");
     }
   };
 
@@ -229,207 +216,132 @@ const GameRoom = () => {
       alert("Please create at least one question before starting the game.");
       return;
     }
-
+    
     socket.emit('start_game_with_custom_questions', { pin, questions });
     setGameStarted(true);
     setCurrentQuestionIndex(0);
   };
 
-  if (gameOver) {
     return (
       <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
+        style={{
           backgroundImage: `url(${BackgroundImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          color: 'white',
-          fontSize: 30,
-        }}
-      >
-        <Typography variant="h4" mb={3}>Game Over!</Typography>
-        <Typography variant="h6" mb={2}>Final Scores:</Typography>
-        {Array.isArray(finalScores) ? (
-          <Box sx={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', p: 3, borderRadius: 2 }}>
-            <Stack spacing={2}>
-              {finalScores.map((player, index) => (
-                <Typography key={index}>{player.name}: {player.score}</Typography>
-              ))}
-            </Stack>
-          </Box>
-        ) : (
-          <Typography variant="h6" color="error">
-            Error: Unable to display scores.
-          </Typography>
-        )}
-      </Box>
-    );
-  }
-
-  return (
-    <Box
-      style={{
-        backgroundImage: `url(${BackgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        height: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        color: 'white',
-        position: 'relative',
-      }}
-    >
-      {/* Main Content - Players */}
-      <Box
-        sx={{
+          height: '100vh',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '300px',
-          padding: '20px',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          borderRadius: '8px',
           color: 'white',
-          zIndex: 1,
         }}
       >
-        <Typography variant="h4" mb={3}>
-          Game PIN: {pin}
-        </Typography>
-        <Typography variant="h5" mb={3}>
-          Players in the Lobby:
-        </Typography>
-  
-        <Stack spacing={1} alignItems="center" width="100%">
-          {players.length > 0 ? (
-            players.map((player, index) => (
-              <Typography key={index}>{player}</Typography>
-            ))
-          ) : (
-            <Typography>No players yet...</Typography>
-          )}
-        </Stack>
-  
-        {isCreator && !gameStarted && (
-          <Box mt={3} width="100%">
-            <Button
-              variant="contained"
-              color="secondary"
-              fullWidth
-              sx={{ mb: 2 }}
-              onClick={createCustomQuestions}
-            >
-              Create Questions
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              sx={{ mb: 2 }}
-              onClick={startGameWithCustomQuestions}
-            >
-              Start Custom Game
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={startGameWithPremadeQuestions}
-            >
-              Use Pre-made Questions
-            </Button>
-          </Box>
-        )}
-  
-        {gameStarted && questions.length > 0 ? (
-          isCreator ? (
-            <HostView
-              questions={questions}
-              currentQuestionIndex={currentQuestionIndex}
-              onNext={handleNextQuestion}
-            />
-          ) : (
-            <PlayerView
-              question={questions[currentQuestionIndex]}
-              gamePin={pin}
-              playerName={username}
-            />
-          )
-        ) : (
-          <Typography variant="h6"></Typography>
-        )}
-      </Box>
-  
-      {/* Score Display */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '50%',
-          right: '20%',
-          transform: 'translateY(-50%)',
-          padding: '20px',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          borderRadius: '8px',
-          minWidth: '200px',
-          fontSize: 16,
-          textAlign: 'center',
-        }}
-      >
-        <Typography variant="h5" mb={2}>
-          Game Scores:
-        </Typography>
-        {Object.entries(scores).map(([player, score]) => (
-          <Typography key={player}>{`${player}: ${score}`}</Typography>
-        ))}
-      </Box>
-  
-      {/* Modal */}
-      <Modal open={openModal} onClose={() => setOpenModal(false)}>
         <Box
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 400,
-            bgcolor: 'background.paper',
-            border: '2px solid #000',
-            boxShadow: 24,
-            p: 4,
             display: 'flex',
             flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '300px',
+            padding: '20px',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            borderRadius: '8px',
+            color: 'white',
           }}
         >
-          <Typography variant="h6" mb={2}>
-            Create a Custom Question
-          </Typography>
-          <TextField
-            label="Question"
-            fullWidth
-            value={newQuestion}
-            onChange={(e) => setNewQuestion(e.target.value)}
-            margin="normal"
-          />
-          <Typography variant="h6" mb={2}>
-            Select the correctAnswer
-          </Typography>
-          {[0, 1, 2, 3].map((index) => (
-            <div key={index}>
-              <Checkbox
-                {...label}
-                checked={newCorrectAnswer[index] || false}
-                value={newCorrectAnswer[index]}
-                onChange={(e) => {
-                  const updatedCorrectAnswer = [...newCorrectAnswer];
-                  updatedCorrectAnswer[index] = e.target.checked;
-                  setNewCorrectAnswer(updatedCorrectAnswer);
-                }}
+          <Typography variant="h4" mb={3}>Game PIN: {pin}</Typography>
+          <Typography variant="h5" mb={3}>Players in the Lobby:</Typography>
+  
+          <Stack spacing={2} alignItems="center" width="100%">
+            {players.length > 0 ? (
+              players.map((player, index) => (
+                <Typography key={index}>{player}</Typography>
+              ))
+            ) : (
+              <Typography>No players yet...</Typography>
+            )}
+          </Stack>
+  
+          {isCreator && !gameStarted && (
+            <Box mt={3} width="100%">
+              <Button
+                variant="contained"
+                color="secondary"
+                fullWidth
+                sx={{ mb: 2 }}
+                onClick={createCustomQuestions}
+              >
+                Create Questions
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                sx={{ mb: 2}}
+                onClick={startGameWithCustomQuestions}
+              >
+                 Start Custom Game
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                onClick={startGameWithPremadeQuestions}
+              >
+                Use Pre-made Questions
+              </Button>
+            </Box>
+          )}
+  
+          {gameStarted && questions.length > 0 ? (
+            isCreator ? (
+              <HostView
+                questions={questions}
+                currentQuestionIndex={currentQuestionIndex}
+                onNext={handleNextQuestion}
+              />
+            ) : ( 
+              <PlayerView question={questions[currentQuestionIndex]} />
+            )   
+          ) : (
+            <Typography variant="h6"></Typography>
+          )}
+        </Box>
+  
+        <Modal open={openModal} onClose={() => setOpenModal(false)}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 400,
+              bgcolor: 'background.paper',
+              border: '2px solid #000',
+              boxShadow: 24,
+              p: 4,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Typography variant="h6" mb={2}>Create a Custom Question</Typography>
+            <TextField
+              label="Question"
+              fullWidth
+              value={newQuestion}
+              onChange={(e) => setNewQuestion(e.target.value)}
+              margin="normal"
+            />
+            <Typography variant="h6" mb={2}>Select the correctAnswer</Typography>
+            {[0, 1, 2, 3].map((index) => (
+              <div key={index}> 
+              <Checkbox {...label}
+              checked={newCorrectAnswer[index] || false}
+              value={newCorrectAnswer[index]}
+              onChange={(e) => {
+                const updatedCorrectAnswer = [...newCorrectAnswer];
+                updatedCorrectAnswer[index] = e.target.checked;
+                setNewCorrectAnswer(updatedCorrectAnswer);
+              }}
               />
               <TextField
                 key={index}
@@ -443,29 +355,28 @@ const GameRoom = () => {
                 }}
                 margin="normal"
               />
-            </div>
-          ))}
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={saveCustomQuestion}
-            sx={{ mt: 1 }}
-          >
-            Use Custom Questions
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={anotherCustomQuestion}
-            sx={{ mt: 1 }}
-          >
-            Add another Question
-          </Button>
-        </Box>
-      </Modal>
-    </Box>
-  );  
-  
+              </div>
+            ))}
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={saveCustomQuestion}
+              sx={{ mt: 1 }}
+            >
+              Use Custom Questions
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={anotherCustomQuestion}
+              sx={{ mt: 1 }}
+            >
+              Add another Question
+            </Button>
+          </Box>
+        </Modal>
+      </Box>
+    );
   };
   
   export default GameRoom;
