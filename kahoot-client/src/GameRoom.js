@@ -475,7 +475,19 @@ useEffect(() => {
         )}
   
         {gameStarted && questions.length > 0 ? (
-          isCreator ? (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            width: '100%',
+            padding: '20px',
+            gap: '30px',
+          }}
+        >
+          {isCreator ? (
             <HostView
               questions={questions}
               currentQuestionIndex={currentQuestionIndex}
@@ -488,13 +500,15 @@ useEffect(() => {
               gamePin={pin}
               playerName={username}
             />
-          )
-        ) : (
-          <Typography variant="h6"></Typography>
-        )}
+          )}
+        </Box>
+      ) : (
+        <Typography variant="h6"></Typography>
+      )}
       </Box>
   
       {/* Score Display */}
+      {gameStarted && (
       <Box
         sx={{
           position: 'absolute',
@@ -516,6 +530,7 @@ useEffect(() => {
           <Typography key={player}>{`${player}: ${score}`}</Typography>
         ))}
       </Box>
+      )}
   
       {/* Modal */}
       <Modal open={openModal} onClose={() => setOpenModal(false)}>

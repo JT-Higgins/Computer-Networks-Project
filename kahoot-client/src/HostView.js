@@ -11,40 +11,38 @@ const HostView = ({ questions, currentQuestionIndex, onNext, onEnd }) => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        width: '300px',
-        padding: '20px',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        borderRadius: '8px',
+        padding: '30px',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        borderRadius: '12px',
         color: 'white',
+        maxWidth: '600px',
+        width: '90%',
+        boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
       }}
     >
-      <Typography variant="h5" mb={3}>Question {currentQuestionIndex + 1}</Typography>
-      <Typography variant="h6" mb={3}>{question.question}</Typography>
+      <Typography variant="h5" mb={2} textAlign="center">
+        Question {currentQuestionIndex + 1}
+      </Typography>
+      <Typography variant="body1" mb={3} textAlign="center">
+        {question.question}
+      </Typography>
       
-      <Stack spacing={2} alignItems="center" width="100%">
+      <Stack spacing={2} width="100%">
         {question.options.map((option, index) => (
-          <Typography key={index}>{option}</Typography>
+          <Typography key={index} sx={{ textAlign: 'center', fontSize: '16px' }}>
+            {option}
+          </Typography>
         ))}
       </Stack>
 
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={onNext}
-        fullWidth
-        sx={{ mt: 2 }}
-      >
-        Next Question
-      </Button>
-      <Button
-        variant="contained"
-        color= 'error'
-        onClick={onEnd}
-        fullWidth
-        sx={{ mt: 2 }}
-      >
-        End Game
-      </Button>
+      <Stack spacing={2} mt={3} width="100%">
+        <Button variant="contained" color="primary" onClick={onNext}>
+          Next Question
+        </Button>
+        <Button variant="contained" color="error" onClick={onEnd}>
+          End Game
+        </Button>
+      </Stack>
     </Box>
   );
 };
