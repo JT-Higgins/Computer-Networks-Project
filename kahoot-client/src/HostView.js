@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Button, Stack } from '@mui/material';
 
-const HostView = ({ questions, currentQuestionIndex, onNext }) => {
+const HostView = ({ questions, currentQuestionIndex, onNext, onEnd }) => {
   const question = questions[currentQuestionIndex];
 
   return (
@@ -35,6 +35,15 @@ const HostView = ({ questions, currentQuestionIndex, onNext }) => {
         sx={{ mt: 2 }}
       >
         Next Question
+      </Button>
+      <Button
+        variant="contained"
+        color= 'error'
+        onClick={onEnd}
+        fullWidth
+        sx={{ mt: 2 }}
+      >
+        End Game
       </Button>
     </Box>
   );

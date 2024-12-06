@@ -1,21 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Stack } from '@mui/material';
 import { socket } from './GameRoom';
+import { useNavigate } from 'react-router-dom';
 
 const PlayerView = ({ question, gamePin, playerName }) => {
-  const [feedback, setFeedback] = useState("");
-  const [player, setPlayer] = useState({ name: playerName, score: 0 }); // Player object with name and score
-  const [gameOver, setGameOver] = useState(false);
-  const [finalScores, setFinalScores] = useState([]);
+  const [feedback, setFeedback] = useState("")
+  const [player, setPlayer] = useState({ name: playerName, score: 0 })
+  const [gameOver, setGameOver] = useState(false)
+  const [finalScores, setFinalScores] = useState([])
+  const [selected, setSelected] = useState(false)
+  const navigate = useNavigate();
 
   useEffect(() => {
-    setFeedback("");
+    setFeedback("")
+    setSelected(false)
   }, [question]);
+
+  const handleLeaveGame = () => {
+    //console.log("Emitting leave_game with:", { pin: gamePin, username: playerName });
+    socket.emit('leave_game', { pin: gamePin, username: playerName });
+    navigate('/')
+  };
+  
 
   useEffect(() => {
     socket.on('game_over', (scores) => {
-      console.log('Game over event received:', scores); // Debugging
-      console.log('Is scores an array?', Array.isArray(scores));
       if (Array.isArray(scores)) {
         setFinalScores(scores);
       } else {
@@ -27,6 +36,8 @@ const PlayerView = ({ question, gamePin, playerName }) => {
 
   // Updates score on the server side
   const handleAnswer = (option) => {
+    if (selected) return;
+    setSelected(true);
     if (option === question.correctAnswer) {
       setFeedback("Correct!");
       socket.emit('update_score', { pin: gamePin, username: player.name, points: 10 });
@@ -63,6 +74,7 @@ const PlayerView = ({ question, gamePin, playerName }) => {
             variant="contained"
             onClick={() => handleAnswer(option)}
             fullWidth
+            disabled={selected}
           >
             {option}
           </Button>
@@ -70,6 +82,15 @@ const PlayerView = ({ question, gamePin, playerName }) => {
       </Stack>
 
       {feedback && <Typography variant="h6" sx={{ mt: 2 }}>{feedback}</Typography>}
+      <Button
+        variant="contained"
+        color="error"
+        onClick={handleLeaveGame}
+        fullWidth
+        sx={{ mt: 2 }}
+      >
+        Leave Game
+      </Button>
     </Box>
   );
 };
