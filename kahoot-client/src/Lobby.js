@@ -65,7 +65,7 @@ const Lobby = () => {
           borderRadius: '8px',
         }}
       >
-        <Typography variant="h4" mb={3}>Kahoot Lobby</Typography>
+        <Typography variant="h4" mb={3}>QUIZ GAME</Typography>
 
         <TextField
           label="Enter Game PIN"

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Box, Typography, Stack, Button, TextField, Modal, Checkbox, FormControl} from '@mui/material';
 import io from 'socket.io-client';
 import axios from 'axios';
@@ -35,8 +35,21 @@ const GameRoom = () => {
   const [gameOver, setGameOver] = useState(false);
   const [finalScores, setFinalScores] = useState([]);
   const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
+  const navigate = useNavigate();
+
   useEffect(() => {
     socket.emit('join', { pin });
+      return () => {
+        socket.off('update_player_list');
+      };
+    }, []);
+
+    useEffect(() => {
+      socket.on('update_player_list', (data) => {
+        //console.log("Updated player list received:", data.players);
+        setPlayers(data.players);
+      });
+    
 
     const fetchPlayers = async () => {
       try {
@@ -66,7 +79,7 @@ const GameRoom = () => {
     });
 
     socket.on('game_over', (scores) => {
-      console.log('Game over event received:', scores);
+      //console.log('Game over with scores:', scores);
       if (Array.isArray(scores)) {
         setFinalScores(scores);
       } else {
@@ -148,7 +161,7 @@ const GameRoom = () => {
     };
     
     setQuestions([...questions, questionData]);
-    console.log("Updated Questions State (custom):", [...questions, questionData]);
+    //console.log("Updated Questions State (custom):", [...questions, questionData]);
     // socket.emit('add_question', { pin, question: questionData });
 
     resetForm();
@@ -168,51 +181,99 @@ const GameRoom = () => {
     };
   
     setQuestions([...questions, questionData]);
-    console.log("Updated Questions State (custom):", [...questions, questionData]);
+    //console.log("Updated Questions State (custom):", [...questions, questionData]);
   
     setOpenModal(false);
   
     socket.emit('add_question', { pin, question: questionData });
   };
 
-  const loadQuestions = async () => {
-    try {
-      const response = await fetch('/questions/example.csv');
-      const csvData = await response.text();
-  
-      const parsedQuestions = csvData.split('\n').slice(1).map((line, index) => {
-        const [question, option1, option2, option3, option4, correctAnswer] = line.split(',');
-  
-        return {
-          question: String(question || "").replace(/^["\s]+|["\s]+$/g, ''),
-          options: [
-            String(option1 || "").replace(/^["\s]+|["\s]+$/g, ''),
-            String(option2 || "").replace(/^["\s]+|["\s]+$/g, ''),
-            String(option3 || "").replace(/^["\s]+|["\s]+$/g, ''),
-            String(option4 || "").replace(/^["\s]+|["\s]+$/g, '')
-          ],
-          correctAnswer: String(correctAnswer || "").replace(/^["\s]+|["\s]+$/g, ''),
-        };
-      });
-  
-      console.log("Parsed Questions Array:", parsedQuestions);
-      setQuestions(parsedQuestions);
-    } catch (error) {
-      console.error('Error loading questions:', error);
-    }
-  };   
+  socket.on('game_started', (data) => {
+    //console.log('Game started with file:', data.file);
+    setGameStarted(true);
+    loadQuestions(data.file);
+});
 
-  const startGameWithPremadeQuestions = async () => {
-    try {
+const loadQuestions = async (filename) => {
+  if (!filename) {
+      console.error('Filename is undefined. Cannot fetch questions.');
+      return;
+  }
+
+  try {
+      const url = `${BASE_URL}/questions/${filename}`;
+      //console.log(`Fetching questions from: ${url}`);
+
+      const response = await fetch(url);
+      if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const csvData = await response.text();
+      //console.log('File name is', filename);
+      //console.log('CSV data:', csvData);
+
+      const parsedQuestions = csvData.split('\n').slice(1).map((line, index) => {
+          const columns = line.split(',');
+
+          if (columns.length !== 6) {
+              console.warn(`Invalid row at line ${index + 2}: ${line}`);
+              return null;
+          }
+
+          const [question, option1, option2, option3, option4, correctAnswer] = columns;
+
+          return {
+              question: question?.trim() || '',
+              options: [
+                  option1?.trim() || '',
+                  option2?.trim() || '',
+                  option3?.trim() || '',
+                  option4?.trim() || '',
+              ],
+              correctAnswer: correctAnswer?.trim() || '',
+          };
+      }).filter(Boolean);
+
+      setQuestions(parsedQuestions);
+  } catch (error) {
+      console.error('Error loading questions:', error);
+  }
+};
+
+useEffect(() => {
+  socket.on('game_started', (data) => {
+      //console.log('Game started event received:', data);
+      if (data.file) {
+          loadQuestions(data.file);
+      } else {
+          console.error('No file received for questions.');
+      }
+  });
+
+  return () => {
+      socket.off('game_started');
+  };
+}, []);
+
+
+
+const startGameWithPremadeQuestions = async () => {
+  try {
       const response = await axios.post(`${BASE_URL}/start_game_with_premade_questions`, { pin });
-      console.log(response.data);
-  
+      //console.log(response.data);
       setGameStarted(true);
-      loadQuestions();
-    } catch (error) {
+      loadQuestions(response.data.file);
+  } catch (error) {
       console.error("Error starting game with pre-made questions:", error);
-    }
-  }; 
+  }
+};
+
+const handleLeaveLobby = () => {
+  socket.emit('leave_game', { pin, username });
+  navigate('/');
+};
+
 
   const handleNextQuestion = () => {
     const nextIndex = currentQuestionIndex + 1;
@@ -223,6 +284,30 @@ const GameRoom = () => {
       socket.emit('game_over', { pin });
     }
   };
+
+  const handleEndGame = () => {
+    socket.emit('game_over', { pin });
+    setGameOver(true);
+  };
+
+  const handleHostQuit = () => {
+    socket.emit('host_quit', { pin });
+
+    navigate('/');
+};
+
+useEffect(() => {
+    socket.on('host_left', (data) => {
+        alert(data.message);
+        navigate('/');
+    });
+
+    return () => {
+        socket.off('host_left');
+    };
+}, []);
+
+  
 
   const startGameWithCustomQuestions = () => {
     if (questions.length === 0) {
@@ -236,6 +321,8 @@ const GameRoom = () => {
   };
 
   if (gameOver) {
+    const sortedScores = [...finalScores].sort((a, b) => b.score - a.score)
+
     return (
       <Box
         sx={{
@@ -251,23 +338,42 @@ const GameRoom = () => {
           fontSize: 30,
         }}
       >
-        <Typography variant="h4" mb={3}>Game Over!</Typography>
-        <Typography variant="h6" mb={2}>Final Scores:</Typography>
-        {Array.isArray(finalScores) ? (
-          <Box sx={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', p: 3, borderRadius: 2 }}>
-            <Stack spacing={2}>
-              {finalScores.map((player, index) => (
-                <Typography key={index}>{player.name}: {player.score}</Typography>
-              ))}
-            </Stack>
-          </Box>
-        ) : (
-          <Typography variant="h6" color="error">
-            Error: Unable to display scores.
-          </Typography>
-        )}
+        <Box
+          sx={{
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            p: 4,
+            borderRadius: 2,
+            textAlign: 'center',
+            maxWidth: '600px',
+            width: '90%',
+          }}
+        >
+          <Typography variant="h4" mb={3}>Game Over!</Typography>
+          <Typography variant="h6" mb={2}>Final Scores:</Typography>
+          {Array.isArray(finalScores) ? (
+            <Box>
+              <Stack spacing={2}>
+                {finalScores.map((player, index) => (
+                  <Typography key={index}>{player.name}: {player.score}</Typography>
+                ))}
+              </Stack>
+            </Box>
+          ) : (
+            <Typography variant="h6" color="error">
+              Error: Unable to display scores.
+            </Typography>
+          )}
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate('/')}
+            sx={{ mt: 3 }}
+          >
+            Back to Home
+          </Button>
+        </Box>
       </Box>
-    );
+    );    
   }
 
   return (
@@ -308,11 +414,23 @@ const GameRoom = () => {
   
         <Stack spacing={1} alignItems="center" width="100%">
           {players.length > 0 ? (
-            players.map((player, index) => (
-              <Typography key={index}>{player}</Typography>
-            ))
+              players.map((player, index) => (
+                  <Typography key={index}>{player}</Typography>
+              ))
           ) : (
-            <Typography>No players yet...</Typography>
+              <Typography>No players yet...</Typography>
+          )}
+
+          {!isCreator && !gameStarted && (
+              <Button
+                  variant="contained"
+                  color="error"
+                  fullWidth
+                  onClick={handleLeaveLobby}
+                  sx={{ mt: 2 }}
+              >
+                  Leave Lobby
+              </Button>
           )}
         </Stack>
   
@@ -340,19 +458,41 @@ const GameRoom = () => {
               variant="contained"
               color="primary"
               fullWidth
+              sx={{mb: 2 }}
               onClick={startGameWithPremadeQuestions}
             >
-              Use Pre-made Questions
+              Use Random Questions
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              fullWidth
+              onClick={handleHostQuit}
+            >
+              Quit
             </Button>
           </Box>
         )}
   
         {gameStarted && questions.length > 0 ? (
-          isCreator ? (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            width: '100%',
+            padding: '20px',
+            gap: '30px',
+          }}
+        >
+          {isCreator ? (
             <HostView
               questions={questions}
               currentQuestionIndex={currentQuestionIndex}
               onNext={handleNextQuestion}
+              onEnd={handleEndGame}
             />
           ) : (
             <PlayerView
@@ -360,13 +500,15 @@ const GameRoom = () => {
               gamePin={pin}
               playerName={username}
             />
-          )
-        ) : (
-          <Typography variant="h6"></Typography>
-        )}
+          )}
+        </Box>
+      ) : (
+        <Typography variant="h6"></Typography>
+      )}
       </Box>
   
       {/* Score Display */}
+      {gameStarted && (
       <Box
         sx={{
           position: 'absolute',
@@ -388,6 +530,7 @@ const GameRoom = () => {
           <Typography key={player}>{`${player}: ${score}`}</Typography>
         ))}
       </Box>
+      )}
   
       {/* Modal */}
       <Modal open={openModal} onClose={() => setOpenModal(false)}>
