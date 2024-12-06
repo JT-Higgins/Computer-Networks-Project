@@ -94,7 +94,7 @@ def start_game_with_premade_questions():
 @app.route('/questions/<filename>', methods=['GET'])
 def get_question_file(filename):
     questions_dir = os.path.join(os.path.dirname(__file__), 'questions')
-    print(f"Serving files from directory: {questions_dir}")
+    # print(f"Serving files from directory: {questions_dir}")
     file_path = os.path.join(questions_dir, filename)
 
     if os.path.exists(file_path):
