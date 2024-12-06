@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
-import { Box, Typography, Stack, Button, TextField, Modal, Checkbox, FormControl} from '@mui/material';
+import { Box, Typography, Stack, Button, TextField, Modal, Checkbox } from '@mui/material';
 import io from 'socket.io-client';
 import axios from 'axios';
 import BackgroundImage from './assets/Background-Image.jpg';
@@ -35,6 +35,7 @@ const GameRoom = () => {
   const [gameOver, setGameOver] = useState(false);
   const [finalScores, setFinalScores] = useState([]);
   const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
+
   useEffect(() => {
     socket.emit('join', { pin });
 
@@ -52,9 +53,13 @@ const GameRoom = () => {
       setPlayers(data.players);
     });
 
-    socket.on('game_started', () => {
+    // update this to allow for differentiation between custom and premade. Had it call on premade if the conditional wasn't present.
+    socket.on('game_started', (data) => {
       setGameStarted(true);
-      loadQuestions();
+      if (data.message === 'Game started with pre-made questions') {
+        //only call load questions if it is the premade questions we want since they are tied to each other
+        loadQuestions();
+      }
     });
 
     socket.on('update_question_index', (data) => {
@@ -115,19 +120,19 @@ const GameRoom = () => {
         index2 = i;
       }
       if(counter > 1){
-        alert('Only one correct answer can be selected')
+        alert('Only one correct answer can be selected');
         return;
       }
     }
 
-    if(counter == 0){
-      alert('Select one correct answer')
+    if(counter === 0){
+      alert('Select one correct answer');
       return;
     }
 
     for(let i = 0; i < newOptions.length; i++){
-      if(newOptions[index2] == newOptions[i]  && index2 != i){
-        alert('Can\'t have the right answer written twice')
+      if(newOptions[index2] === newOptions[i]  && index2 !== i){
+        alert('Can\'t have the right answer written twice');
         return;
       }
     }
@@ -171,7 +176,7 @@ const GameRoom = () => {
     console.log("Updated Questions State (custom):", [...questions, questionData]);
   
     setOpenModal(false);
-  
+    
   };
 
   const loadQuestions = async () => {
@@ -179,7 +184,7 @@ const GameRoom = () => {
       const response = await fetch('/questions/example.csv');
       const csvData = await response.text();
   
-      const parsedQuestions = csvData.split('\n').slice(1).map((line, index) => {
+      const parsedQuestions = csvData.split('\n').slice(1).map((line) => {
         const [question, option1, option2, option3, option4, correctAnswer] = line.split(',');
   
         return {
@@ -205,9 +210,7 @@ const GameRoom = () => {
     try {
       const response = await axios.post(`${BASE_URL}/start_game_with_premade_questions`, { pin });
       console.log(response.data);
-  
-      setGameStarted(true);
-      loadQuestions();
+      // Do not call setGameStarted(true) here since the server emits game_started
     } catch (error) {
       console.error("Error starting game with pre-made questions:", error);
     }
@@ -229,8 +232,7 @@ const GameRoom = () => {
       return;
     }
     socket.emit('start_game_with_custom_question', { pin, question: questions });
-    
-    setGameStarted(true);
+    // tried to start the game here but gave issues overriding with premade questions. Server handles starting the game with the custom questions
     setCurrentQuestionIndex(0);
   };
 
@@ -464,7 +466,6 @@ const GameRoom = () => {
       </Modal>
     </Box>
   );  
-  
-  };
-  
-  export default GameRoom;
+};
+
+export default GameRoom;

@@ -75,16 +75,23 @@ def next_question(data):
     questions_length = data.get('questionsLength')
     if current_question_index >= questions_length:
         emit('game_over', {'message': 'No more questions!'}, room=pin)
-        handle_game_over({'pin': pin})  # Trigger game over
+        handle_game_over({'pin': pin})
     else:
         emit('update_question_index', {'currentQuestionIndex': current_question_index}, room=pin)
         
- @socketio.on('start_game_with_custom_question')
- def show_custom_questions(data):
-     pin = data['pin']
-     custom_questions = data[question]
-     if pin in lobbies:
-         socketio.emit('start_game_with_custom_questions', {'questions': custom_questions}, room=pin)
+@socketio.on('start_game_with_custom_question')
+def show_custom_questions(data):
+    pin = data['pin']
+    custom_questions = data['question']  # Need to reference question as: 'question'
+    if pin in lobbies:
+        # instead of lbbies[pin][questions], we need the quotation marks in there with questions. Had the right idea though
+        lobbies[pin]["questions"] = custom_questions
+        # We dont have to start in the gameroom, instead we can set start to true here since it is strored in the lobby dictionary
+        lobbies[pin]["started"] = True
+        # send the message to the clients that the game has started with the custome questions
+        socketio.emit('game_started', {'message': 'Game started with custom questions'}, room=pin)
+        # send the questions
+        socketio.emit('start_game_with_custom_questions', {'questions': custom_questions}, room=pin)
 
 if __name__ == '__main__':
     port = 5000
