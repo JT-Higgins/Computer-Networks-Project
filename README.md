@@ -5,7 +5,11 @@ This is a multiplayer Trivia Crack game implemented using Flask (Python) for the
 ## How to play:
 1. **Install the required libraries** Run `pip install -r requirements.txt` in your terminal (pip version 21.3.1 should work on requirements.txt, if running pip 9.0.3 like was installed on my ssh machine, consider using requirements_v2.txt. Versions of the modules in requirements.txt and requirements_v2.txt are dependent on pip version)
 2. **Import npm modules:** npm install, npm install socket.io-client (do this inside of the kahoot-client directory)
-3. get IP address of the server by running: ifconfig -a (on the first line under eno1)
+3. **get IP address of the server by running:** `ifconfig -a`
+
+    On the first line under eno1, you are looking for **inet xxx.xx.xx.xxx**
+
+
 4. **Start the server:** python3 app-server.py <port>
 5. **Connect clients:** npm start <server_ip> <port>
 6. **Play the game:** The server has the questions. The clients will answer the questions from the server.
