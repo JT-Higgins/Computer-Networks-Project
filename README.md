@@ -54,6 +54,12 @@ This is a multiplayer Trivia Crack game implemented using Flask (Python) for the
 * **Python Environment**: Ensure you have a Python environment to run the Flask server.
 * **Operating Systems**: Cross-platform; can run on Windows, macOS, or Linux.
 
+## Retrospective:
+**What went right**:
+This project incompassed everything that we envisioned for the most part. We were able to create a kahoot type game where users could compete against one another in a series of trivia questions. We were able to gain good connectivity between the server and clients, as well as synchronization. The UI for the game turned out to function really well on top of the clean look, allowing for a good user experience. 
+
+**What went wrong**:
+
 ## Additional Resources:
 * [Python Documentation](https://docs.python.org/3/)
 * [Flask Documentation](https://flask.palletsprojects.com/)
