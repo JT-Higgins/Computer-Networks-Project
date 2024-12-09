@@ -58,3 +58,11 @@ This is a multiplayer Trivia Crack game implemented using Flask (Python) for the
 * [Python Documentation](https://docs.python.org/3/)
 * [Flask Documentation](https://flask.palletsprojects.com/)
 * [Socket.IO Documentation](https://socket.io/docs/)
+
+## Retrospective
+
+### What Went Right
+This project successfully implements a functional game system that includes both a backend and a fully interactive UI. The primary goals were met, with core functionality like hosting games, joining lobbies, answering questions, and tracking scores working seamlessly. Additional credit was achieved by building a UI, which provided a user-friendly interface. Collaboration on integrating the backend with the frontend and resolving complex real-time interaction issues demonstrates strong problem-solving and technical skills.
+
+### What Could Be Improved On
+On the network side, while the socket-based communication was effective, improvements could include better handling of dropped connections, ensuring consistent updates across clients during network instability, and implementing scalability measures like throttling connections. Exploring advanced networking techniques, such as WebRTC for peer-to-peer communication or optimized state synchronization, could enhance performance and responsiveness.
